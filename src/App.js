@@ -485,6 +485,7 @@ export class VRQuizApp {
       quizUrl: '../src/data/quizData.json',
       themeUrl: '../src/data/themeConfig.json',
       surveyUrl: '../src/data/surveyData.json',
+      classroomLayoutUrl: '../src/data/classroomLayout.json',
       ...config
     };
 
@@ -509,6 +510,7 @@ export class VRQuizApp {
     this.classroomHotspots = [];
     this.classroomHotspotRoots = new Map();
     this.classroomLayout = null;
+    this.classroomLayoutFile = null;
     this.classroomPlacementIndex = 0;
     this.savedClassroomAnchor = null;
     this.introVideoConfirmed = readJson(INTRO_VIDEO_CONFIRM_KEY, false) === true;
@@ -525,14 +527,16 @@ export class VRQuizApp {
     this.setLoading('AI Literacy Quiz Studio를 불러오는 중입니다.');
 
     try {
-      const [quizData, themeData, surveyData] = await Promise.all([
+      const [quizData, themeData, surveyData, classroomLayoutData] = await Promise.all([
         this.loadQuizData(),
         this.loadOptionalJson(this.config.themeUrl, {}),
-        this.loadSurveyData()
+        this.loadSurveyData(),
+        this.loadOptionalJson(this.config.classroomLayoutUrl, null)
       ]);
       this.data = quizData;
       this.theme = this.deepMerge(DEFAULT_THEME, themeData || {});
       this.surveyData = surveyData;
+      this.classroomLayoutFile = this.normaliseClassroomLayout(classroomLayoutData);
 
       const validation = validateQuizData(this.data);
       if (!validation.valid) throw new Error(validation.errors.join('\n'));
@@ -867,8 +871,12 @@ export class VRQuizApp {
       localStorage.removeItem(CLASSROOM_LAYOUT_KEY);
     }
 
-    this.savedClassroomAnchor = this.loadClassroomAnchor();
-    this.classroomLayout = this.loadClassroomLayout();
+    const canUseLayoutFile = !this.routeOptions.resetClassroomAnchor && !this.routeOptions.placementMode;
+    const localLayout = this.loadClassroomLayout();
+    const fileLayout = canUseLayoutFile ? this.classroomLayoutFile : null;
+
+    this.savedClassroomAnchor = this.loadClassroomAnchor() || fileLayout?.anchor || null;
+    this.classroomLayout = this.hasAnyClassroomPlacement(localLayout) ? localLayout : fileLayout || localLayout;
     this.scene.dataset.classroomMode = 'true';
     this.sky?.setAttribute('visible', 'false');
     this.setGroupVisible(this.environmentRoot, false);
@@ -915,6 +923,47 @@ export class VRQuizApp {
     if (!this.classroomLayout) this.classroomLayout = {version: 1, placements: {}};
     this.classroomLayout.updatedAt = new Date().toISOString();
     localStorage.setItem(CLASSROOM_LAYOUT_KEY, JSON.stringify(this.classroomLayout));
+  }
+
+  normaliseClassroomLayout(layout) {
+    if (!layout || typeof layout !== 'object') return null;
+    const placements = layout.placements && typeof layout.placements === 'object' ? layout.placements : {};
+    const anchor = layout.anchor?.position && layout.anchor?.rotation ? layout.anchor : null;
+    if (!anchor && Object.keys(placements).length === 0) return null;
+    return {
+      version: Number(layout.version || 1),
+      anchor,
+      placements
+    };
+  }
+
+  hasAnyClassroomPlacement(layout) {
+    return Object.keys(layout?.placements || {}).length > 0;
+  }
+
+  buildClassroomLayoutExport() {
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      anchor: this.savedClassroomAnchor || this.loadClassroomAnchor(),
+      placements: this.classroomLayout?.placements || {}
+    };
+  }
+
+  downloadClassroomLayout() {
+    const blob = new Blob(
+      [JSON.stringify(this.buildClassroomLayoutExport(), null, 2)],
+      {type: 'application/json;charset=utf-8'}
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'classroomLayout.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    this.showNotice('classroomLayout.json 파일을 다운로드했습니다. GitHub의 src/data 폴더에 업로드하세요.');
   }
 
   hasCompleteClassroomLayout() {
@@ -1083,9 +1132,11 @@ export class VRQuizApp {
 
     this.classroomPlacementIndex = this.getNextClassroomPlacementIndex();
     if (this.classroomPlacementIndex >= CLASSROOM_PANEL_SEQUENCE.length) {
-      this.setGroupVisible(this.classroomPanelPlacementRoot, false);
       this.setGroupVisible(this.classroomPlacementCapture, false);
-      this.showDomainSelect();
+      this.updateClassroomPanelPlacementGuide();
+      this.setGroupVisible(this.classroomLayoutDownloadButton, true);
+      this.setGroupVisible(this.classroomPlacementDoneButton, true);
+      this.showNotice('모든 패널 배치가 끝났습니다. 배치 파일을 다운로드해 GitHub에 업로드하세요.');
       return;
     }
     this.updateClassroomPanelPlacementGuide();
@@ -1099,7 +1150,14 @@ export class VRQuizApp {
     this.setGroupVisible(this.classroomRoot, true);
     this.classroomPlacementIndex = this.getNextClassroomPlacementIndex();
     if (this.classroomPlacementIndex >= CLASSROOM_PANEL_SEQUENCE.length) {
-      this.showDomainSelect();
+      this.applyClassroomLayout();
+      this.setGroupVisible(this.classroomHotspotRoot, true);
+      this.setClassroomHotspotsInteractive(false);
+      this.updateClassroomPanelPlacementGuide();
+      this.setGroupVisible(this.classroomPanelPlacementRoot, true);
+      this.setGroupVisible(this.classroomPlacementCapture, false);
+      this.setGroupVisible(this.classroomLayoutDownloadButton, true);
+      this.setGroupVisible(this.classroomPlacementDoneButton, true);
       return;
     }
     this.applyClassroomLayout();
@@ -1107,6 +1165,8 @@ export class VRQuizApp {
     this.setClassroomHotspotsInteractive(false);
     this.updateClassroomPanelPlacementGuide();
     this.setGroupVisible(this.classroomPanelPlacementRoot, true);
+    this.setGroupVisible(this.classroomLayoutDownloadButton, false);
+    this.setGroupVisible(this.classroomPlacementDoneButton, false);
     this.setGroupVisible(this.classroomPlacementCapture, true);
     this.debugLog('mode-classroom-panel-placement', {index: this.classroomPlacementIndex});
   }
@@ -1131,6 +1191,9 @@ export class VRQuizApp {
     const body = target
       ? `${target.title} 패널을 놓을 위치를 바라보고 클릭하세요.`
       : '모든 패널 배치가 끝났습니다.';
+    const footer = target
+      ? '클릭할 때마다 다음 패널로 넘어갑니다.'
+      : '다운로드한 파일을 GitHub의 src/data/classroomLayout.json에 업로드하세요.';
     applyTexture(this.classroomPanelPlacementPlane, {
       variant: 'panel',
       width: 980,
@@ -1141,7 +1204,7 @@ export class VRQuizApp {
       title: target ? `${target.label} 배치` : '배치 완료',
       subtitle: `${placedCount}/${CLASSROOM_PANEL_SEQUENCE.length}`,
       body,
-      footer: '클릭할 때마다 다음 패널로 넘어갑니다.',
+      footer,
       textColor: '#f8fbff',
       mutedColor: '#c6d8e8',
       titleSize: 46,
@@ -1663,7 +1726,57 @@ export class VRQuizApp {
       position: '0 0 0'
     });
 
-    this.classroomPanelPlacementRoot.appendChild(this.classroomPanelPlacementPlane);
+    this.classroomLayoutDownloadButton = createPlane({
+      id: 'classroom-layout-download-button',
+      width: 0.84,
+      height: 0.22,
+      className: 'interactive classroom-layout-download-button',
+      position: '-0.46 -0.55 0.08'
+    });
+    applyTexture(this.classroomLayoutDownloadButton, {
+      variant: 'button',
+      width: 620,
+      height: 170,
+      background: '#102235',
+      border: '#7dd3fc',
+      accent: '#7dd3fc',
+      title: '배치 파일 다운로드',
+      textColor: '#f8fbff',
+      titleSize: 28,
+      tokens: this.theme.ui || {}
+    });
+    bindInteractiveAction(this.classroomLayoutDownloadButton, () => this.withRuntimeGuard('배치 파일 다운로드', () => this.downloadClassroomLayout()));
+    bindHoverEffect(this.classroomLayoutDownloadButton, {activeScale: '1.05 1.05 1'});
+
+    this.classroomPlacementDoneButton = createPlane({
+      id: 'classroom-placement-done-button',
+      width: 0.66,
+      height: 0.22,
+      className: 'interactive classroom-placement-done-button',
+      position: '0.48 -0.55 0.08'
+    });
+    applyTexture(this.classroomPlacementDoneButton, {
+      variant: 'button',
+      width: 520,
+      height: 170,
+      background: '#102235',
+      border: '#94a3b8',
+      accent: '#94a3b8',
+      title: '활동 화면',
+      textColor: '#f8fbff',
+      titleSize: 28,
+      tokens: this.theme.ui || {}
+    });
+    bindInteractiveAction(this.classroomPlacementDoneButton, () => this.withRuntimeGuard('활동 화면으로 이동', () => this.showDomainSelect()));
+    bindHoverEffect(this.classroomPlacementDoneButton, {activeScale: '1.05 1.05 1'});
+    this.setGroupVisible(this.classroomLayoutDownloadButton, false);
+    this.setGroupVisible(this.classroomPlacementDoneButton, false);
+
+    this.classroomPanelPlacementRoot.append(
+      this.classroomPanelPlacementPlane,
+      this.classroomLayoutDownloadButton,
+      this.classroomPlacementDoneButton
+    );
     this.camera.appendChild(this.classroomPanelPlacementRoot);
 
     this.classroomPlacementCapture = document.createElement('a-entity');
