@@ -1,5 +1,5 @@
-import {applyTexture, createPlane} from './canvasTexture.js?v=20260510-inplacegrid1';
-import {bindHoverEffect, bindInteractiveAction} from '../utils/interaction.js?v=20260510-inplacegrid1';
+import {applyTexture, createPlane} from './canvasTexture.js?v=20260604-videofit1';
+import {bindHoverEffect, bindInteractiveAction} from '../utils/interaction.js?v=20260604-videofit1';
 
 export class IntroVideoPanel {
   constructor({theme, videoConfig, onConfirm}) {
@@ -12,22 +12,22 @@ export class IntroVideoPanel {
 
     this.el = document.createElement('a-entity');
     this.el.id = 'intro-video-panel';
-    this.el.setAttribute('position', '0 2.34 -3.18');
+    this.el.setAttribute('position', '0 2.32 -3.18');
     this.el.setAttribute('visible', 'false');
 
     this.panel = createPlane({
       id: 'intro-video-info',
       width: 2.70,
-      height: 1.26,
-      position: '0 0.42 0.04'
+      height: 2.28,
+      position: '0 0.06 0.04'
     });
 
     this.videoPlane = document.createElement('a-video');
     this.videoPlane.id = 'intro-video-player';
     this.videoPlane.classList.add('interactive');
-    this.videoPlane.setAttribute('width', '2.32');
-    this.videoPlane.setAttribute('height', '1.30');
-    this.videoPlane.setAttribute('position', '0 -0.62 0.12');
+    this.videoPlane.setAttribute('width', '2.30');
+    this.videoPlane.setAttribute('height', '1.29');
+    this.videoPlane.setAttribute('position', '0 -0.36 0.12');
     this.videoPlane.setAttribute('visible', 'false');
 
     this.playButton = createPlane({
@@ -35,14 +35,14 @@ export class IntroVideoPanel {
       width: 0.82,
       height: 0.22,
       className: 'interactive intro-video-play',
-      position: '-0.48 -1.42 0.18'
+      position: '-0.48 -1.30 0.18'
     });
     this.confirmButton = createPlane({
       id: 'intro-video-confirm-button',
       width: 0.92,
       height: 0.22,
       className: 'interactive intro-video-confirm',
-      position: '0.50 -1.42 0.18'
+      position: '0.50 -1.30 0.18'
     });
 
     bindInteractiveAction(this.videoPlane, () => this.toggleVideo());
@@ -136,7 +136,7 @@ export class IntroVideoPanel {
     applyTexture(this.panel, {
       variant: 'panel',
       width: 1400,
-      height: 650,
+      height: 1180,
       background: '#06111f',
       border: accent,
       accent,
@@ -144,7 +144,7 @@ export class IntroVideoPanel {
       title: config.title || '먼저 영상을 확인하세요',
       body: config.description || '영상을 본 뒤 교실 속 마커를 찾아 문제를 해결합니다.',
       footer: hasVideo
-        ? '영상 화면 또는 재생 버튼을 눌러 시청한 뒤 확인 완료를 누르세요.'
+        ? '아래 영상이 끝나면 확인 완료를 눌러 활동을 시작하세요.'
         : '영상 파일을 넣지 않은 경우 확인 완료를 누르면 활동이 시작됩니다.',
       icon: 'VIDEO',
       textColor: '#f8fbff',
@@ -152,7 +152,7 @@ export class IntroVideoPanel {
       titleSize: 46,
       titleMaxLines: 2,
       bodySize: 28,
-      bodyMaxLines: 3,
+      bodyMaxLines: 2,
       footerSize: 22,
       tokens: this.theme.ui || {}
     });

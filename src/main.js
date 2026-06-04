@@ -1,4 +1,4 @@
-import {VRQuizApp} from './App.js?v=20260604-layoutdownload1';
+import {VRQuizApp} from './App.js?v=20260604-videofit1';
 
 const root = document.querySelector('#app');
 const config = window.VR_QUIZ_CONFIG || {};
