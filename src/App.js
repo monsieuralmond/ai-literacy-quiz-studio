@@ -1,15 +1,15 @@
-import {applyTexture, createPlane} from './components/canvasTexture.js?v=20260604-videofit2';
-import {QuizPanel} from './components/QuizPanel.js?v=20260604-videofit2';
-import {ResultPanel} from './components/ResultPanel.js?v=20260604-videofit2';
-import {StartPanel} from './components/StartPanel.js?v=20260604-videofit2';
-import {SurveyPanel} from './components/SurveyPanel.js?v=20260604-videofit2';
-import {IntroVideoPanel} from './components/IntroVideoPanel.js?v=20260604-videofit2';
-import {registerGalaxyFloorComponent} from './components/GalaxyFloor.js?v=20260604-videofit2';
-import {bindHoverEffect, bindInteractiveAction} from './utils/interaction.js?v=20260604-videofit2';
+import {applyTexture, createPlane} from './components/canvasTexture.js?v=20260604-videofit3';
+import {QuizPanel} from './components/QuizPanel.js?v=20260604-videofit3';
+import {ResultPanel} from './components/ResultPanel.js?v=20260604-videofit3';
+import {StartPanel} from './components/StartPanel.js?v=20260604-videofit3';
+import {SurveyPanel} from './components/SurveyPanel.js?v=20260604-videofit3';
+import {IntroVideoPanel} from './components/IntroVideoPanel.js?v=20260604-videofit3';
+import {registerGalaxyFloorComponent} from './components/GalaxyFloor.js?v=20260604-videofit3';
+import {bindHoverEffect, bindInteractiveAction} from './utils/interaction.js?v=20260604-videofit3';
 import {
   REQUIRED_DOMAIN_ORDER,
   validateQuizData
-} from './utils/quizValidator.js?v=20260604-videofit2';
+} from './utils/quizValidator.js?v=20260604-videofit3';
 import {
   answerQuestion,
   getAttemptCount,
@@ -20,13 +20,13 @@ import {
   recordAttempt,
   resetDomainProgress,
   resetProgress
-} from './utils/scoreManager.js?v=20260604-videofit2';
+} from './utils/scoreManager.js?v=20260604-videofit3';
 import {
   loadSurveyResponses,
   resetSurveyResponses,
   saveSurveyAnswer
-} from './utils/surveyStorage.js?v=20260604-videofit2';
-import {readJson, removeItem, writeJson} from './utils/storage.js?v=20260604-videofit2';
+} from './utils/surveyStorage.js?v=20260604-videofit3';
+import {readJson, removeItem, writeJson} from './utils/storage.js?v=20260604-videofit3';
 
 const MAX_ATTEMPTS = 2;
 const DEBUG_QUERY_VALUES = new Set(['1', 'true', 'yes', 'debug']);
@@ -513,7 +513,7 @@ export class VRQuizApp {
     this.classroomLayoutFile = null;
     this.classroomPlacementIndex = 0;
     this.savedClassroomAnchor = null;
-    this.introVideoConfirmed = readJson(INTRO_VIDEO_CONFIRM_KEY, false) === true;
+    this.introVideoConfirmed = false;
     this.missionState = readJson(MISSION_STATE_KEY, {completed: {}});
     this.pendingPointAfterIntro = null;
     const params = new URLSearchParams(window.location.search);
@@ -591,8 +591,9 @@ export class VRQuizApp {
       resetSurveyResponses();
       this.surveyResponses = loadSurveyResponses();
     }
+    // Legacy cleanup: the intro video should be shown again on every fresh page load.
+    removeItem(INTRO_VIDEO_CONFIRM_KEY);
     if (this.routeOptions.resetAll || this.routeOptions.resetVideo) {
-      removeItem(INTRO_VIDEO_CONFIRM_KEY);
       this.introVideoConfirmed = false;
     }
     if (this.routeOptions.resetAll) {
@@ -2097,7 +2098,6 @@ export class VRQuizApp {
 
   confirmIntroVideo() {
     this.introVideoConfirmed = true;
-    writeJson(INTRO_VIDEO_CONFIRM_KEY, true);
     this.introVideoPanel?.hide();
 
     const pendingPoint = this.pendingPointAfterIntro;
