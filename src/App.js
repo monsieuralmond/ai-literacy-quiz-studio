@@ -1,15 +1,15 @@
-import {applyTexture, createPlane} from './components/canvasTexture.js?v=20260604-videofit1';
-import {QuizPanel} from './components/QuizPanel.js?v=20260604-videofit1';
-import {ResultPanel} from './components/ResultPanel.js?v=20260604-videofit1';
-import {StartPanel} from './components/StartPanel.js?v=20260604-videofit1';
-import {SurveyPanel} from './components/SurveyPanel.js?v=20260604-videofit1';
-import {IntroVideoPanel} from './components/IntroVideoPanel.js?v=20260604-videofit1';
-import {registerGalaxyFloorComponent} from './components/GalaxyFloor.js?v=20260604-videofit1';
-import {bindHoverEffect, bindInteractiveAction} from './utils/interaction.js?v=20260604-videofit1';
+import {applyTexture, createPlane} from './components/canvasTexture.js?v=20260604-videofit2';
+import {QuizPanel} from './components/QuizPanel.js?v=20260604-videofit2';
+import {ResultPanel} from './components/ResultPanel.js?v=20260604-videofit2';
+import {StartPanel} from './components/StartPanel.js?v=20260604-videofit2';
+import {SurveyPanel} from './components/SurveyPanel.js?v=20260604-videofit2';
+import {IntroVideoPanel} from './components/IntroVideoPanel.js?v=20260604-videofit2';
+import {registerGalaxyFloorComponent} from './components/GalaxyFloor.js?v=20260604-videofit2';
+import {bindHoverEffect, bindInteractiveAction} from './utils/interaction.js?v=20260604-videofit2';
 import {
   REQUIRED_DOMAIN_ORDER,
   validateQuizData
-} from './utils/quizValidator.js?v=20260604-videofit1';
+} from './utils/quizValidator.js?v=20260604-videofit2';
 import {
   answerQuestion,
   getAttemptCount,
@@ -20,13 +20,13 @@ import {
   recordAttempt,
   resetDomainProgress,
   resetProgress
-} from './utils/scoreManager.js?v=20260604-videofit1';
+} from './utils/scoreManager.js?v=20260604-videofit2';
 import {
   loadSurveyResponses,
   resetSurveyResponses,
   saveSurveyAnswer
-} from './utils/surveyStorage.js?v=20260604-videofit1';
-import {readJson, removeItem, writeJson} from './utils/storage.js?v=20260604-videofit1';
+} from './utils/surveyStorage.js?v=20260604-videofit2';
+import {readJson, removeItem, writeJson} from './utils/storage.js?v=20260604-videofit2';
 
 const MAX_ATTEMPTS = 2;
 const DEBUG_QUERY_VALUES = new Set(['1', 'true', 'yes', 'debug']);

@@ -1,5 +1,5 @@
-import {applyTexture, createPlane} from './canvasTexture.js?v=20260604-videofit1';
-import {bindHoverEffect, bindInteractiveAction} from '../utils/interaction.js?v=20260604-videofit1';
+import {applyTexture, createPlane} from './canvasTexture.js?v=20260604-videofit2';
+import {bindHoverEffect, bindInteractiveAction} from '../utils/interaction.js?v=20260604-videofit2';
 
 export class IntroVideoPanel {
   constructor({theme, videoConfig, onConfirm}) {
@@ -12,7 +12,7 @@ export class IntroVideoPanel {
 
     this.el = document.createElement('a-entity');
     this.el.id = 'intro-video-panel';
-    this.el.setAttribute('position', '0 2.32 -3.18');
+    this.el.setAttribute('position', '0 2.48 -3.18');
     this.el.setAttribute('visible', 'false');
 
     this.panel = createPlane({
