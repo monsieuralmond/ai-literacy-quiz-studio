@@ -72,7 +72,7 @@
   },
   "arMission": {
     "enabled": true,
-    "sequential": true,
+    "sequential": false,
     "markerMode": true,
     "order": [
       "framework",

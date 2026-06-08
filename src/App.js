@@ -1,15 +1,15 @@
-import {applyTexture, createPlane} from './components/canvasTexture.js?v=20260604-videofit3';
-import {QuizPanel} from './components/QuizPanel.js?v=20260604-videofit3';
-import {ResultPanel} from './components/ResultPanel.js?v=20260604-videofit3';
-import {StartPanel} from './components/StartPanel.js?v=20260604-videofit3';
-import {SurveyPanel} from './components/SurveyPanel.js?v=20260604-videofit3';
-import {IntroVideoPanel} from './components/IntroVideoPanel.js?v=20260604-videofit3';
-import {registerGalaxyFloorComponent} from './components/GalaxyFloor.js?v=20260604-videofit3';
-import {bindHoverEffect, bindInteractiveAction} from './utils/interaction.js?v=20260604-videofit3';
+import {applyTexture, createPlane} from './components/canvasTexture.js?v=20260608-homefree1';
+import {QuizPanel} from './components/QuizPanel.js?v=20260608-homefree1';
+import {ResultPanel} from './components/ResultPanel.js?v=20260608-homefree1';
+import {StartPanel} from './components/StartPanel.js?v=20260608-homefree1';
+import {SurveyPanel} from './components/SurveyPanel.js?v=20260608-homefree1';
+import {IntroVideoPanel} from './components/IntroVideoPanel.js?v=20260608-homefree1';
+import {registerGalaxyFloorComponent} from './components/GalaxyFloor.js?v=20260608-homefree1';
+import {bindHoverEffect, bindInteractiveAction} from './utils/interaction.js?v=20260608-homefree1';
 import {
   REQUIRED_DOMAIN_ORDER,
   validateQuizData
-} from './utils/quizValidator.js?v=20260604-videofit3';
+} from './utils/quizValidator.js?v=20260608-homefree1';
 import {
   answerQuestion,
   getAttemptCount,
@@ -20,13 +20,13 @@ import {
   recordAttempt,
   resetDomainProgress,
   resetProgress
-} from './utils/scoreManager.js?v=20260604-videofit3';
+} from './utils/scoreManager.js?v=20260608-homefree1';
 import {
   loadSurveyResponses,
   resetSurveyResponses,
   saveSurveyAnswer
-} from './utils/surveyStorage.js?v=20260604-videofit3';
-import {readJson, removeItem, writeJson} from './utils/storage.js?v=20260604-videofit3';
+} from './utils/surveyStorage.js?v=20260608-homefree1';
+import {readJson, removeItem, writeJson} from './utils/storage.js?v=20260608-homefree1';
 
 const MAX_ATTEMPTS = 2;
 const DEBUG_QUERY_VALUES = new Set(['1', 'true', 'yes', 'debug']);
@@ -472,7 +472,7 @@ const DEFAULT_THEME = {
   },
   arMission: {
     enabled: true,
-    sequential: true,
+    sequential: false,
     markerMode: true,
     order: DEFAULT_MISSION_ORDER
   }
@@ -1159,6 +1159,7 @@ export class VRQuizApp {
       this.setGroupVisible(this.classroomPlacementCapture, false);
       this.setGroupVisible(this.classroomLayoutDownloadButton, true);
       this.setGroupVisible(this.classroomPlacementDoneButton, true);
+      this.updateHomeButtonVisibility();
       return;
     }
     this.applyClassroomLayout();
@@ -1170,6 +1171,7 @@ export class VRQuizApp {
     this.setGroupVisible(this.classroomPlacementDoneButton, false);
     this.setGroupVisible(this.classroomPlacementCapture, true);
     this.debugLog('mode-classroom-panel-placement', {index: this.classroomPlacementIndex});
+    this.updateHomeButtonVisibility();
   }
 
   setClassroomHotspotsInteractive(interactive) {
@@ -1653,6 +1655,37 @@ export class VRQuizApp {
       quizPanel.mount(this.classroomRoot);
       this.quizPanels.set(domainId, quizPanel);
     });
+
+    this.renderHomeButton();
+  }
+
+  renderHomeButton() {
+    if (!this.camera) return;
+    const accent = this.theme.palette?.cyan || '#38bdf8';
+    this.homeButton = createPlane({
+      id: 'home-button',
+      width: 0.58,
+      height: 0.17,
+      className: 'interactive home-button',
+      position: '-0.72 -0.54 -1.18',
+      rotation: '0 0 0'
+    });
+    applyTexture(this.homeButton, {
+      variant: 'button',
+      width: 520,
+      height: 150,
+      background: '#06111f',
+      border: accent,
+      accent,
+      title: '처음으로',
+      textColor: '#f8fbff',
+      titleSize: 29,
+      tokens: this.theme.ui || {}
+    });
+    bindInteractiveAction(this.homeButton, () => this.withRuntimeGuard('처음으로 돌아가기', () => this.returnToStart()));
+    bindHoverEffect(this.homeButton, {activeScale: '1.055 1.055 1'});
+    this.setGroupVisible(this.homeButton, false);
+    this.camera.appendChild(this.homeButton);
   }
 
   renderClassroomPlacementUi() {
@@ -2066,6 +2099,20 @@ export class VRQuizApp {
     this.focusSection('start');
     this.startPanel.show();
     this.setGroupVisible(this.startPanel.el, true);
+    this.updateHomeButtonVisibility();
+  }
+
+  returnToStart() {
+    this.activeDomain = null;
+    this.pendingPointAfterIntro = null;
+    this.introVideoPanel?.pauseVideo?.();
+    this.showStart();
+  }
+
+  updateHomeButtonVisibility() {
+    if (!this.homeButton) return;
+    const shouldShow = this.appMode !== 'start';
+    this.setGroupVisible(this.homeButton, shouldShow);
   }
 
   isIntroVideoEnabled() {
@@ -2094,6 +2141,7 @@ export class VRQuizApp {
       pendingPointAfterIntro: this.pendingPointAfterIntro,
       hasVideoUrl: Boolean(this.theme?.introVideo?.url)
     });
+    this.updateHomeButtonVisibility();
   }
 
   confirmIntroVideo() {
@@ -2127,6 +2175,7 @@ export class VRQuizApp {
     this.placementRoot?.setAttribute('scale', '0.96 0.96 0.96');
     this.placementRoot?.setAttribute('animation__open', 'property: scale; to: 1 1 1; dur: 180; easing: easeOutCubic');
     this.debugLog('mode-classroom-placement');
+    this.updateHomeButtonVisibility();
   }
 
   showDomainSelect() {
@@ -2155,6 +2204,7 @@ export class VRQuizApp {
       this.classroomHotspotRoot?.setAttribute('scale', '0.96 0.96 0.96');
       this.classroomHotspotRoot?.setAttribute('animation__open', 'property: scale; to: 1 1 1; dur: 180; easing: easeOutCubic');
       this.debugLog('mode-domain-select-hotspots');
+      this.updateHomeButtonVisibility();
       return;
     }
 
@@ -2165,6 +2215,7 @@ export class VRQuizApp {
     this.domainSelectRoot.setAttribute('scale', '0.97 0.97 0.97');
     this.domainSelectRoot.setAttribute('animation__open', 'property: scale; to: 1 1 1; dur: 160; easing: easeOutCubic');
     this.debugLog('mode-domain-select');
+    this.updateHomeButtonVisibility();
   }
 
   rotateDomainRing(direction = 1) {
@@ -2560,6 +2611,7 @@ export class VRQuizApp {
     this.frameworkDetailRoot.setAttribute('animation__open', 'property: scale; to: 1 1 1; dur: 180; easing: easeOutCubic');
     this.markMissionComplete('framework');
     this.debugLog('mode-framework');
+    this.updateHomeButtonVisibility();
   }
 
   createFrameworkDomainTexture(domain) {
@@ -3002,7 +3054,7 @@ export class VRQuizApp {
   }
 
   isMissionSequential() {
-    return this.theme?.arMission?.enabled !== false && this.theme?.arMission?.sequential !== false;
+    return this.theme?.arMission?.enabled !== false && this.theme?.arMission?.sequential === true;
   }
 
   isSurveyComplete() {
@@ -3183,6 +3235,7 @@ export class VRQuizApp {
     this.setGroupVisible(panel.el, true);
     if (!animate) panel.el.removeAttribute('animation__open');
     this.debugLog('show-question', {domainId: domain.id, questionId: question.id});
+    this.updateHomeButtonVisibility();
   }
 
   selectChoice(choiceIndex, panel, event = null) {
@@ -3267,6 +3320,7 @@ export class VRQuizApp {
     panel.setCloseButton('영역 선택');
     this.setGroupVisible(panel.el, true);
     this.markMissionComplete(domain.id);
+    this.updateHomeButtonVisibility();
   }
 
   closeQuiz() {
@@ -3290,6 +3344,7 @@ export class VRQuizApp {
     this.setGroupVisible(this.resultPanel.el, true);
     this.markMissionComplete('report');
     this.debugLog('mode-report', overall);
+    this.updateHomeButtonVisibility();
   }
 
   showSurvey() {
@@ -3305,6 +3360,7 @@ export class VRQuizApp {
     this.surveyPanel.show(this.surveyData, this.surveyResponses);
     this.setGroupVisible(this.surveyPanel.el, true);
     this.debugLog('mode-survey');
+    this.updateHomeButtonVisibility();
   }
 
   saveSurveyAnswer(question, value) {
@@ -3784,11 +3840,16 @@ export class VRQuizApp {
     try {
       const result = action();
       if (result && typeof result.catch === 'function') {
-        result.catch((error) => this.showRuntimeError(error, label));
+        result
+          .catch((error) => this.showRuntimeError(error, label))
+          .finally(() => this.updateHomeButtonVisibility());
+      } else {
+        this.updateHomeButtonVisibility();
       }
       return result;
     } catch (error) {
       this.showRuntimeError(error, label);
+      this.updateHomeButtonVisibility();
       return null;
     }
   }
